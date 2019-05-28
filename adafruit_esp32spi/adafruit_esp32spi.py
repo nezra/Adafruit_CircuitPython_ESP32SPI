@@ -20,33 +20,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-`adafruit_esp32spi`
+`esp32spi`
 ================================================================================
 
-CircuitPython driver library for using ESP32 as WiFi  co-processor using SPI
+CircuitPython driver library for using ESP32 as WiFi co-processor using SPI ported to the
+OpenMV Cam.
 
+Original source here: https://github.com/adafruit/Adafruit_CircuitPython_ESP32SPI
 
 * Author(s): ladyada
+* Forked by: Nezra
 
 Implementation Notes
 --------------------
 
 **Hardware:**
 
-**Software and Dependencies:**
+ESP32 variant of your choice with the Nina-FW. To use the Wrover-B please see my fork of the Nina-FW
 
-* Adafruit CircuitPython firmware for the supported boards:
-  https://github.com/adafruit/circuitpython/releases
-
-* Adafruit's Bus Device library: https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
+OpenMV Cam
 
 """
 
 import struct
+import utime
 import time
 from micropython import const
-from digitalio import Direction
-from adafruit_bus_device.spi_device import SPIDevice
+from machine import Pin
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_ESP32SPI.git"
@@ -132,23 +132,22 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
     TLS_MODE = const(2)
 
     # pylint: disable=too-many-arguments
-    def __init__(self, spi, cs_pin, ready_pin, reset_pin, gpio0_pin=None, *, debug=False):
+    def __init__(self, spi, cs_pin, ready_pin, reset_pin, *, debug=False):
         self._debug = debug
         self._buffer = bytearray(10)
         self._pbuf = bytearray(1)  # buffer for param read
         self._sendbuf = bytearray(256)  # buffer for command sending
         self._socknum_ll = [[0]]      # pre-made list of list of socket #
-
-        self._spi_device = SPIDevice(spi, cs_pin, baudrate=8000000)
+        #self._spi_device = SPIDevice(spi, cs_pin, baudrate=8000000)
         self._cs = cs_pin
         self._ready = ready_pin
         self._reset = reset_pin
-        self._gpio0 = gpio0_pin
+        #self._gpio0 = gpio0_pin
         self._cs.direction = Direction.OUTPUT
         self._ready.direction = Direction.INPUT
         self._reset.direction = Direction.OUTPUT
-        if self._gpio0:
-            self._gpio0.direction = Direction.INPUT
+        #if self._gpio0:
+        #    self._gpio0.direction = Direction.INPUT
         self.reset()
     # pylint: enable=too-many-arguments
 
@@ -156,31 +155,31 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
         """Hard reset the ESP32 using the reset pin"""
         if self._debug:
             print("Reset ESP32")
-        if self._gpio0:
-            self._gpio0.direction = Direction.OUTPUT
-            self._gpio0.value = True  # not bootload mode
-        self._cs.value = True
-        self._reset.value = False
-        time.sleep(0.01)    # reset
-        self._reset.value = True
-        time.sleep(0.75)    # wait for it to boot up
-        if self._gpio0:
-            self._gpio0.direction = Direction.INPUT
+        #if self._gpio0:
+        #    self._gpio0.direction = Direction.OUTPUT
+        #    self._gpio0.value = True  # not bootload mode
+        self._cs.high()
+        self._reset.low()
+        utime.sleep(0.01)    # reset
+        self._reset.high()
+        utime.sleep(0.75)    # wait for it to boot up
+        #if self._gpio0:
+        #    self._gpio0.direction = Direction.INPUT
 
     def _wait_for_ready(self):
         """Wait until the ready pin goes low"""
-        if self._debug >= 3:
+        if self._debug:
             print("Wait for ESP32 ready", end='')
-        times = time.monotonic()
-        while (time.monotonic() - times) < 10:  # wait up to 10 seconds
-            if not self._ready.value: # we're ready!
+        times = time.ticks()
+        while (time.ticks() - times) < 10000:  # wait up to 10 seconds
+            if not self._ready.value(): # we're ready!
                 break
-            if self._debug >= 3:
+            if self._debug:
                 print('.', end='')
-                time.sleep(0.05)
+                utime.sleep(0.05)
         else:
             raise RuntimeError("ESP32 not responding")
-        if self._debug >= 3:
+        if self._debug:
             print()
 
     # pylint: disable=too-many-branches
@@ -222,14 +221,14 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
 
         self._wait_for_ready()
         with self._spi_device as spi:
-            times = time.monotonic()
-            while (time.monotonic() - times) < 1: # wait up to 1000ms
-                if self._ready.value:  # ok ready to send!
+            times = time.ticks()
+            while (time.ticks() - times) < 1000: # wait up to 1000ms
+                if self._ready.value():  # ok ready to send!
                     break
             else:
                 raise RuntimeError("ESP32 timed out on SPI select")
-            spi.write(self._sendbuf, start=0, end=packet_len)  # pylint: disable=no-member
-            if self._debug >= 3:
+            spi.write(self._sendbuf)  # pylint: disable=no-member
+            if self._debug:
                 print("Wrote: ", [hex(b) for b in self._sendbuf[0:packet_len]])
     # pylint: disable=too-many-branches
 
@@ -244,14 +243,14 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
         """Read many bytes from SPI"""
         if not end:
             end = len(buffer)
-        spi.readinto(buffer, start=start, end=end)
-        if self._debug >= 3:
+        spi.readinto(buffer)
+        if self._debug:
             print("\t\tRead:", [hex(i) for i in buffer])
 
     def _wait_spi_char(self, spi, desired):
         """Read a byte with a time-out, and if we get it, check that its what we expect"""
-        times = time.monotonic()
-        while (time.monotonic() - times) < 0.1:
+        times = time.ticks()
+        while (time.ticks() - times) < 100:
             r = self._read_byte(spi)
             if r == _ERR_CMD:
                 raise RuntimeError("Error response to command")
@@ -271,9 +270,9 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
 
         responses = []
         with self._spi_device as spi:
-            times = time.monotonic()
-            while (time.monotonic() - times) < 1: # wait up to 1000ms
-                if self._ready.value:  # ok ready to send!
+            times = time.ticks()
+            while (time.ticks() - times) < 1000: # wait up to 1000ms
+                if self._ready.value():  # ok ready to send!
                     break
             else:
                 raise RuntimeError("ESP32 timed out on SPI select")
@@ -296,7 +295,7 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
                 responses.append(response)
             self._check_data(spi, _END_CMD)
 
-        if self._debug >= 2:
+        if self._debug:
             print("Read %d: " % len(responses[0]), responses)
         return responses
 
@@ -466,7 +465,7 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
             stat = self.status
             if stat == WL_CONNECTED:
                 return stat
-            time.sleep(1)
+            utime.sleep(1)
         if stat in (WL_CONNECT_FAILED, WL_CONNECTION_LOST, WL_DISCONNECTED):
             raise RuntimeError("Failed to connect to ssid", ssid)
         if stat == WL_NO_SSID_AVAIL:
@@ -626,19 +625,14 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
         if resp[0][0] != 1:
             raise RuntimeError("Failed to set debug mode")
 
-    def set_pin_mode(self, pin, mode):
+    def set_pin_mode(self, pin, mode): 
         """
         Set the io mode for a GPIO pin.
 
         :param int pin: ESP32 GPIO pin to set.
         :param value: direction for pin, digitalio.Direction or integer (0=input, 1=output).
         """
-        if mode == Direction.OUTPUT:
-            pin_mode = 1
-        elif mode == Direction.INPUT:
-            pin_mode = 0
-        else:
-            pin_mode = mode
+        pin_mode = mode
         resp = self._send_command_get_response(_SET_PIN_MODE_CMD,
                                                ((pin,), (pin_mode,)))
         if resp[0][0] != 1:
