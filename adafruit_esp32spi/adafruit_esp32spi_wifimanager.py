@@ -31,8 +31,8 @@ WiFi Manager for making ESP32 SPI as WiFi much easier
 
 # pylint: disable=no-name-in-module
 
-from adafruit_esp32spi import adafruit_esp32spi
-import adafruit_esp32spi.adafruit_esp32spi_requests as requests
+import adafruit_esp32spi
+import esp32spi_requests as requests
 
 class ESPSPI_WiFiManager:
     """
@@ -69,7 +69,7 @@ class ESPSPI_WiFiManager:
         Attempt to connect to WiFi using the current settings
         """
         if self.debug:
-            if self._esp.status == adafruit_esp32spi.WL_IDLE_STATUS:
+            if self._esp.status == esp32spi.WL_IDLE_STATUS:
                 print("ESP32 found and in idle mode")
             print("Firmware vers.", self._esp.firmware_version)
             print("MAC addr:", [hex(i) for i in self._esp.MAC_address])
