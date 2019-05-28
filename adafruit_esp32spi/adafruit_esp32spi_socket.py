@@ -87,13 +87,13 @@ class socket:
     def readline(self):
         """Attempt to return as many bytes as we can up to but not including '\r\n'"""
         #print("Socket readline")
-        stamp = time.monotonic()
+        stamp = time.ticks()
         while b'\r\n' not in self._buffer:
             # there's no line already in there, read some more
             avail = min(_the_interface.socket_available(self._socknum), MAX_PACKET)
             if avail:
                 self._buffer += _the_interface.socket_read(self._socknum, avail)
-            elif self._timeout > 0 and time.monotonic() - stamp > self._timeout:
+            elif self._timeout > 0 and time.ticks() - stamp > self._timeout:
                 self.close()  # Make sure to close socket so that we don't exhaust sockets.
                 raise RuntimeError("Didn't receive full response, failing out")
         firstline, self._buffer = self._buffer.split(b'\r\n', 1)
@@ -116,7 +116,7 @@ class socket:
             self._buffer = b''
             gc.collect()
             return ret
-        stamp = time.monotonic()
+        stamp = time.ticks()
 
         to_read = size - len(self._buffer)
         received = []
@@ -124,12 +124,12 @@ class socket:
             #print("Bytes to read:", to_read)
             avail = min(_the_interface.socket_available(self._socknum), MAX_PACKET)
             if avail:
-                stamp = time.monotonic()
+                stamp = time.ticks()
                 recv = _the_interface.socket_read(self._socknum, min(to_read, avail))
                 received.append(recv)
                 to_read -= len(recv)
                 gc.collect()
-            if self._timeout > 0 and time.monotonic() - stamp > self._timeout:
+            if self._timeout > 0 and time.ticks() - stamp > self._timeout:
                 break
         #print(received)
         self._buffer += b''.join(received)
