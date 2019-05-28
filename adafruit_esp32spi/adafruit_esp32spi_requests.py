@@ -47,7 +47,7 @@ license='MIT'
 # pylint: disable=no-name-in-module
 
 import gc
-import adafruit_esp32spi.adafruit_esp32spi_socket as socket
+import esp32spi_socket as socket
 
 _the_interface = None   # pylint: disable=invalid-name
 def set_interface(iface):
@@ -163,7 +163,7 @@ def request(method, url, data=None, json=None, headers=None, stream=False):
     sock = socket.socket(addr_info[0], addr_info[1], addr_info[2])
     resp = Response(sock)  # our response
 
-    sock.settimeout(1)     # 1 second timeout
+    sock.settimeout(1000)     # 1 second timeout
 
     try:
         if proto == "https:":
