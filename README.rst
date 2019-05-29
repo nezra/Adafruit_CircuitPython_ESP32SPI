@@ -3,7 +3,7 @@ Introduction
 
 Ported Adafruit CircuitPython driver library for using ESP32 as WiFi co-processor using SPI on the OpenMV Camera.
 
-For the Circuitpython variant Please visit Adafruit's upstream respoitory.
+For the Circuitpython variant Please visit Adafruit's upstream respitory.
 
 The companion firmware `is available on GitHub
 <https://github.com/adafruit/nina-fw>`_. Please be sure to check the example code for
