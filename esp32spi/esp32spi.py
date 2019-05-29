@@ -602,8 +602,8 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
             print("*** Socket connect mode", conn_mode)
 
         self.socket_open(socket_num, dest, port, conn_mode=conn_mode)
-        times = time.monotonic()
-        while (time.monotonic() - times) < 3:  # wait 3 seconds
+        times = time.ticks()
+        while (time.ticks() - times) < 3:  # wait 3 seconds
             if self.socket_connected(socket_num):
                 return True
             time.sleep(0.01)
