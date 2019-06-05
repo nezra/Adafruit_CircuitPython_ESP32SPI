@@ -124,6 +124,35 @@ WL_AP_CONNECTED       = const(8)
 WL_AP_FAILED          = const(9)
 # pylint: enable=bad-whitespace
 
+class SPIDevice:
+    def __init__(self, spi, chip_select=None, *,
+                 baudrate=100000, polarity=0, phase=0, extra_clocks=0):
+        self.spi = spi
+        self.baudrate = baudrate
+        self.polarity = polarity
+        self.phase = phase
+        self.extra_clocks = extra_clocks
+        self.chip_select = chip_select
+        if self.chip_select:
+            self.chip_select.high()
+    def __enter__(self):
+        if self.chip_select:
+            self.chip_select.low()
+        return self.spi
+    def __exit__(self, *exc):
+        if self.chip_select:
+            self.chip_select.high()
+        if self.extra_clocks > 0:
+            buf = bytearray(1)
+            buf[0] = 0xff
+            clocks = self.extra_clocks // 8
+            if self.extra_clocks % 8 != 0:
+                clocks += 1
+            for _ in range(clocks):
+                self.spi.write(buf)
+        return False
+    
+
 class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
     """A class that will talk to an ESP32 module programmed with special firmware
     that lets it act as a fast an efficient WiFi co-processor"""
