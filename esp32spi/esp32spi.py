@@ -167,7 +167,7 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
         self._pbuf = bytearray(1)  # buffer for param read
         self._sendbuf = bytearray(256)  # buffer for command sending
         self._socknum_ll = [[0]]      # pre-made list of list of socket #
-        #self._spi_device = SPIDevice(spi, cs_pin, baudrate=8000000)
+        self._spi_device = SPIDevice(spi, cs_pin, baudrate=8000000)
         self._cs = cs_pin
         self._ready = ready_pin
         self._reset = reset_pin
