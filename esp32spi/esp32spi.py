@@ -161,7 +161,7 @@ class ESP_SPIcontrol:  # pylint: disable=too-many-public-methods
     TLS_MODE = const(2)
 
     # pylint: disable=too-many-arguments
-    def __init__(self, spi, cs_pin, ready_pin, reset_pin, *, debug=False):
+    def __init__(self, spi, cs_pin, ready_pin, reset_pin, *, gpio_pin=None, debug=False):
         self._debug = debug
         self._buffer = bytearray(10)
         self._pbuf = bytearray(1)  # buffer for param read
