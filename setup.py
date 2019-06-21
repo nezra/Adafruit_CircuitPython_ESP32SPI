@@ -17,17 +17,17 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='adafruit-circuitpython-esp32spi',
+    name='esp32spi',
 
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
 
-    description='CircuitPython driver library for using ESP32 as WiFi  co-processor using SPI',
+    description='MicropythonPython driver library for using ESP32 as WiFi  co-processor using SPI loosely based on Adafruits CircuitPython implementation',
     long_description=long_description,
     long_description_content_type='text/x-rst',
 
     # The project's main homepage.
-    url='https://github.com/adafruit/Adafruit_CircuitPython_ESP32SPI',
+    url='https://github.com/nezra/ESP32SPI',
 
     # Author details
     author='Adafruit Industries',
@@ -54,11 +54,11 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='adafruit blinka circuitpython micropython esp32spi wifi esp32',
+    keywords='micropython esp32spi wifi esp32 openMV',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
     # TODO: IF LIBRARY FILES ARE A PACKAGE FOLDER,
     #       CHANGE `py_modules=['...']` TO `packages=['...']`
-    packages=['adafruit_esp32spi'],
+    packages=['esp32spi'],
 )
