@@ -91,9 +91,13 @@ class socket:
         while b'\r\n' not in self._buffer:
             # there's no line already in there, read some more
             avail = min(_the_interface.socket_available(self._socknum), MAX_PACKET)
+            #print(self._buffer)
+            #self._timeout=1000
             if avail:
                 self._buffer += _the_interface.socket_read(self._socknum, avail)
+
             elif self._timeout > 0 and time.ticks() - stamp > self._timeout:
+                print("time elapsed: ",(time.ticks()-stamp),self._timeout)
                 self.close()  # Make sure to close socket so that we don't exhaust sockets.
                 raise RuntimeError("Didn't receive full response, failing out")
         firstline, self._buffer = self._buffer.split(b'\r\n', 1)
